@@ -2,6 +2,94 @@ import React, { useState, useEffect, useRef } from "react";
 import "./styles.css";
 import "./App.css";
 
+/* ===== SVG Icons (inline to avoid external deps) ===== */
+const SearchIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+);
+
+const DownloadIcon = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
+const PlayIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+);
+
+/* Category icon map */
+const CATEGORY_ICONS = {
+  all: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" />
+      <rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
+    </svg>
+  ),
+  images: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </svg>
+  ),
+  documents: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  ),
+  videos: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m22 8-6 4 6 4V8Z" /><rect width="14" height="12" x="2" y="6" rx="2" ry="2" />
+    </svg>
+  ),
+  links: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+    </svg>
+  ),
+  notes: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
+      <path d="M15 3v4a2 2 0 0 0 2 2h4" />
+    </svg>
+  ),
+  ideas: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+      <path d="M9 18h6" /><path d="M10 22h4" />
+    </svg>
+  ),
+  code: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" />
+    </svg>
+  ),
+  csv: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" />
+    </svg>
+  ),
+  text: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 6.1H3" /><path d="M21 12.1H3" /><path d="M15.1 18H3" />
+    </svg>
+  ),
+};
+
 function App() {
   // Core overlay states: 'neutral' | 'text' | 'drop' | 'saving' | 'confirmation' | 'error'
   const [overlayPhase, setOverlayPhase] = useState("neutral");
@@ -19,68 +107,55 @@ function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [searchExplanation, setSearchExplanation] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [dragDepth, setDragDepth] = useState(0); // Track drag depth to prevent flickering
+  const [dragDepth, setDragDepth] = useState(0);
   const [vaultDir, setVaultDir] = useState("");
   const [selectedItem, setSelectedItem] = useState(null);
   const textareaRef = useRef(null);
-  
 
   // State transition helpers
   const enterTextMode = () => {
-    if (overlayPhase !== 'saving' && overlayPhase !== 'confirmation') {
-      console.log('[App] Entering text mode');
-      setOverlayPhase('text');
+    if (overlayPhase !== "saving" && overlayPhase !== "confirmation") {
+      setOverlayPhase("text");
       setValidationMessage("");
     }
   };
 
   const enterDropMode = () => {
-    if (overlayPhase !== 'saving' && overlayPhase !== 'confirmation') {
-      console.log('[App] Entering drop mode');
-      setOverlayPhase('drop');
+    if (overlayPhase !== "saving" && overlayPhase !== "confirmation") {
+      setOverlayPhase("drop");
       setValidationMessage("");
     }
   };
 
   const enterSavingMode = () => {
-    console.log('[App] Entering saving mode');
-    setOverlayPhase('saving');
+    setOverlayPhase("saving");
     setIsSaving(true);
     setValidationMessage("Saving...");
   };
 
-  const enterConfirmationMode = (message = "Saved ✓") => {
-    console.log('[App] Entering confirmation mode');
-    setOverlayPhase('confirmation');
+  const enterConfirmationMode = (message = "Saved successfully") => {
+    setOverlayPhase("confirmation");
     setSuccessMessage(message);
     setShowSuccessFeedback(true);
     setIsSaving(false);
-    
-    // Clear text and category after successful save
     setText("");
     setDetectedCategory("");
-    
-    // Notify main process about success
     if (window.electronAPI && window.electronAPI.setOverlayMode) {
-      window.electronAPI.setOverlayMode('confirmation');
+      window.electronAPI.setOverlayMode("confirmation");
     }
   };
 
   const enterErrorMode = (message) => {
-    console.log('[App] Entering error mode');
-    setOverlayPhase('error');
+    setOverlayPhase("error");
     setValidationMessage(message);
     setIsSaving(false);
-    
-    // Notify main process about error state for reopen-on-failure
     if (window.electronAPI && window.electronAPI.setOverlayMode) {
-      window.electronAPI.setOverlayMode('error');
+      window.electronAPI.setOverlayMode("error");
     }
   };
 
   const resetToNeutral = () => {
-    console.log('[App] Resetting to neutral mode');
-    setOverlayPhase('neutral');
+    setOverlayPhase("neutral");
     setText("");
     setDetectedCategory("");
     setValidationMessage("");
@@ -93,63 +168,37 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isOverlayMode = params.get("overlay") === "true";
-    console.log("[App] URL:", window.location.href);
-    console.log("[App] URL search params:", window.location.search);
-    console.log("[App] isOverlay detected:", isOverlayMode);
     setIsOverlay(isOverlayMode);
 
-    // Register listener for save success event (overlay mode)
     if (window.electronAPI.onSaveSuccess) {
       window.electronAPI.onSaveSuccess(() => {
-        console.log("[App] Save success event received");
         enterConfirmationMode();
       });
     }
 
-    // Register listener for overlay mode changes from main process
     if (window.electronAPI.onOverlayModeChange && isOverlayMode) {
       window.electronAPI.onOverlayModeChange((mode) => {
-        console.log("[App] Overlay mode change received:", mode);
-        
-        // Handle context-aware mode changes
-        if (mode === 'drop') {
-          // Context-aware: open directly in drop mode
-          enterDropMode();
-        } else if (mode === 'text') {
-          // Reopen-on-failure: restore text mode
-          enterTextMode();
-        } else if (mode === 'neutral') {
-          // Reset to neutral
-          resetToNeutral();
-        }
+        if (mode === "drop") enterDropMode();
+        else if (mode === "text") enterTextMode();
+        else if (mode === "neutral") resetToNeutral();
       });
     }
   }, []);
 
-  // Handle text input - switch to text mode when user types or pastes
   const handleTextChange = (e) => {
     const newText = e.target.value;
     setText(newText);
-    
-    // If user starts typing in neutral mode, switch to text mode
-    if (overlayPhase === 'neutral' && newText.trim()) {
+    if (overlayPhase === "neutral" && newText.trim()) {
       enterTextMode();
     }
   };
 
   const handlePasteClick = async () => {
-    // Only allow paste when not in saving/confirmation states
-    if (overlayPhase === 'saving' || overlayPhase === 'confirmation') {
-      return;
-    }
-    
+    if (overlayPhase === "saving" || overlayPhase === "confirmation") return;
     try {
       const clipboard = await navigator.clipboard.readText();
       setText(clipboard);
-      
-      // Pasting switches to text mode
       enterTextMode();
-      
       const isURL = await window.electronAPI.isURLContent(clipboard);
       if (isURL) {
         setDetectedCategory("links");
@@ -158,7 +207,6 @@ function App() {
         setDetectedCategory("text");
         setValidationMessage("Detected text");
       }
-      
       textareaRef.current?.focus();
     } catch (error) {
       console.error("Failed to paste from clipboard:", error);
@@ -170,20 +218,16 @@ function App() {
     try {
       const allItems = await window.electronAPI.getItems();
       setItems(allItems);
-
       if (allItems.length === 0) {
-        console.log("[App] No items found, creating test data...");
         await window.electronAPI.createTestItems();
         const newItems = await window.electronAPI.getItems();
         setItems(newItems);
-        console.log("[App] Created test items, loaded:", newItems.length);
       }
     } catch (error) {
       console.error("Failed to load items:", error);
     }
   }, []);
 
-  // Load items when app initializes (main window only)
   useEffect(() => {
     if (!isOverlay) {
       const loadVaultDir = async () => {
@@ -194,27 +238,21 @@ function App() {
           console.error("Failed to get vault dir:", err);
         }
       };
-
       loadVaultDir();
       loadItems();
-
-      return () => {};
     }
   }, [isOverlay, loadItems]);
 
-  // Refresh items whenever main process notifies that items were updated
   useEffect(() => {
     if (!isOverlay && window.electronAPI.onItemsUpdated) {
       const unsubscribe = window.electronAPI.onItemsUpdated(() => {
         loadItems();
       });
-      return () => {
-        if (unsubscribe) unsubscribe();
-      };
+      return () => { if (unsubscribe) unsubscribe(); };
     }
   }, [isOverlay, loadItems]);
 
-  // Smart search functionality (main window only)
+  // Smart search
   useEffect(() => {
     const q = searchQuery.trim();
     if (!isOverlay && q.length >= 2) {
@@ -224,7 +262,6 @@ function App() {
           const results = await window.electronAPI.smartSearch(q);
           setSearchResults(results.results);
           setSearchExplanation(results.explanation);
-          console.log("[App] Search results:", results.results.length, "items");
         } catch (error) {
           console.error("Search failed:", error);
           setSearchResults([]);
@@ -233,12 +270,9 @@ function App() {
           setIsSearching(false);
         }
       };
-
-      // Debounce search to avoid too many requests
       const timeoutId = setTimeout(performSearch, 600);
       return () => clearTimeout(timeoutId);
     } else {
-      // Clear search results when query is empty
       setSearchResults([]);
       setSearchExplanation("");
     }
@@ -256,45 +290,30 @@ function App() {
         setShowSuccessFeedback(false);
         setSuccessMessage("");
         setIsSaving(false);
-        
-        if (isOverlay && overlayPhase === 'confirmation' && window.electronAPI.hideOverlay) {
+        if (isOverlay && overlayPhase === "confirmation" && window.electronAPI.hideOverlay) {
           setTimeout(() => {
             window.electronAPI.hideOverlay();
-            // Reset to neutral after hiding
             resetToNeutral();
           }, 300);
         }
       }, 1500);
-
       return () => clearTimeout(hideFeedbackTimer);
     }
   }, [showSuccessFeedback, isOverlay, overlayPhase]);
 
-  // In error state we now keep the overlay visible until the user closes it,
-  // so we don't auto-reset back to neutral and hide the message.
-
-  // Drag/drop are handled on the actual drop target element (see drop-zone props)
-
+  // Drag & Drop handlers
   const handleDragEnter = async (e) => {
     try {
       e.preventDefault();
       e.stopPropagation();
-      
-      // Increment drag depth to prevent flickering
-      setDragDepth(prev => prev + 1);
-
-      // On Windows, Explorer dragenter events sometimes don't include files yet.
-      // For UX, we treat any dragenter as an intent to drop and switch to drop mode
-      // immediately; the drop handler + preload will validate actual files.
-      console.log('[App] Drag enter - switching to drop mode');
+      setDragDepth((prev) => prev + 1);
       enterDropMode();
       setIsDragging(true);
-      
       if (window.electronAPI && window.electronAPI.setOverlayDragState) {
         window.electronAPI.setOverlayDragState(true);
       }
     } catch (err) {
-      console.error('[App] handleDragEnter error', err);
+      console.error("[App] handleDragEnter error", err);
     }
   };
 
@@ -306,17 +325,11 @@ function App() {
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Decrement drag depth and only hide when depth reaches 0
-    setDragDepth(prev => {
+    setDragDepth((prev) => {
       const newDepth = prev - 1;
       if (newDepth <= 0) {
         setIsDragging(false);
-        // When drag completely leaves, return to neutral if not in text mode
-        if (overlayPhase === 'drop') {
-          resetToNeutral();
-        }
-        
+        if (overlayPhase === "drop") resetToNeutral();
         if (window.electronAPI && window.electronAPI.setOverlayDragState) {
           window.electronAPI.setOverlayDragState(false);
         }
@@ -330,119 +343,61 @@ function App() {
     try {
       e.preventDefault();
       e.stopPropagation();
-      
-      // Reset drag depth on drop
       setDragDepth(0);
       setIsDragging(false);
-      
       if (window.electronAPI && window.electronAPI.setOverlayDragState) {
         window.electronAPI.setOverlayDragState(false);
       }
-      
-      // Enter saving mode immediately
       enterSavingMode();
-      
       try {
-        console.log('[App] Calling saveDroppedFiles...');
-        try {
-          console.log(
-            "[App] Extracted paths:",
-            window.api && window.api.extractDroppedFilePaths
-              ? window.api.extractDroppedFilePaths()
-              : null
-          );
-        } catch (e) {
-          console.log("[App] Failed to read extracted paths");
-        }
         if (!window.api || !window.api.saveDroppedFiles) {
-          throw new Error('Drop saving is not available (window.api.saveDroppedFiles missing)');
+          throw new Error("Drop saving is not available (window.api.saveDroppedFiles missing)");
         }
-
-        // If we only have filenames (no full paths), the preload's blob fallback can
-        // fail with DOMException on some Windows setups. In that case, read file
-        // bytes here (renderer) and send them to main via saveFileBlob.
-        const extracted = window.api.extractDroppedFilePaths
-          ? window.api.extractDroppedFilePaths()
-          : [];
-        const hasFullPaths = Array.isArray(extracted)
-          ? extracted.some((p) => p && (p.includes("/") || p.includes("\\")))
-          : false;
-
+        const extracted = window.api.extractDroppedFilePaths ? window.api.extractDroppedFilePaths() : [];
+        const hasFullPaths = Array.isArray(extracted) ? extracted.some((p) => p && (p.includes("/") || p.includes("\\"))) : false;
         let results;
         if (hasFullPaths) {
           results = await window.api.saveDroppedFiles();
         } else {
-          if (!window.electronAPI?.saveFileBlob) {
-            throw new Error("saveFileBlob is not available");
-          }
-          const files = (e.dataTransfer && e.dataTransfer.files) ? Array.from(e.dataTransfer.files) : [];
-          if (!files.length) {
-            throw new Error("No files available to read from drop event");
-          }
-
+          if (!window.electronAPI?.saveFileBlob) throw new Error("saveFileBlob is not available");
+          const files = e.dataTransfer && e.dataTransfer.files ? Array.from(e.dataTransfer.files) : [];
+          if (!files.length) throw new Error("No files available to read from drop event");
           results = [];
           for (const file of files) {
             try {
               const arrayBuffer = await file.arrayBuffer();
               const uint8 = new Uint8Array(arrayBuffer);
-              const r = await window.electronAPI.saveFileBlob({
-                name: file.name,
-                buffer: uint8,
-              });
+              const r = await window.electronAPI.saveFileBlob({ name: file.name, buffer: uint8 });
               results.push(r);
             } catch (err) {
-              console.error("[App] saveFileBlob failed:", err);
-              results.push({
-                error: err && err.message ? err.message : "Unknown error",
-                path: file.name,
-              });
+              results.push({ error: err && err.message ? err.message : "Unknown error", path: file.name });
             }
           }
         }
-
-        console.log('[App] saveDroppedFiles results', results);
-        
-        // Check if we have valid results
-        if (!results || results.length === 0) {
-          throw new Error('No files were saved');
-        }
-        
-        // Check if any files failed to save
-        const failedFiles = results.filter(r => r.error);
-        const successfulFiles = results.filter(r => !r.error);
-        
+        if (!results || results.length === 0) throw new Error("No files were saved");
+        const failedFiles = results.filter((r) => r.error);
+        const successfulFiles = results.filter((r) => !r.error);
         if (failedFiles.length > 0) {
-          console.warn('[App] Some files failed to save:', failedFiles);
-          if (successfulFiles.length === 0) {
-            // All files failed
-            throw new Error('All files failed to save');
-          } else {
-            // Some files failed, show partial success
-            enterConfirmationMode(`Saved ${successfulFiles.length} file(s), ${failedFiles.length} failed`);
-          }
+          if (successfulFiles.length === 0) throw new Error("All files failed to save");
+          enterConfirmationMode(`Saved ${successfulFiles.length} file(s), ${failedFiles.length} failed`);
         } else {
-          // All files saved successfully
-          console.log('[App] All files saved successfully:', successfulFiles.length);
           enterConfirmationMode();
         }
       } catch (err) {
-        console.error('[App] saveDroppedFiles error', err);
-        enterErrorMode(err && err.message ? err.message : 'Failed to save file');
+        enterErrorMode(err && err.message ? err.message : "Failed to save file");
       }
     } catch (err) {
-      console.error('[App] handleDrop error', err);
-      enterErrorMode('Drop operation failed');
+      enterErrorMode("Drop operation failed");
     }
   };
 
-  // Keyboard events for overlay
+  // Keyboard events
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (isOverlay && overlayPhase === "text" && e.key === "Enter" && e.ctrlKey) {
         handleSaveText();
       }
     };
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [text, overlayPhase, isOverlay]);
@@ -451,9 +406,7 @@ function App() {
     if (text.trim()) {
       try {
         enterSavingMode();
-        const savedItem = await window.electronAPI.saveText(text);
-        console.log('[App] Text saved successfully:', savedItem);
-        // Success feedback will be shown when overlay-save-success event arrives
+        await window.electronAPI.saveText(text);
       } catch (error) {
         console.error("Failed to save text:", error);
         enterErrorMode("Failed to save");
@@ -464,55 +417,42 @@ function App() {
   const handleDeleteItem = async (itemId) => {
     try {
       await window.electronAPI.deleteItem(itemId);
-      setItems(items.filter(i => i.id !== itemId));
+      setItems(items.filter((i) => i.id !== itemId));
     } catch (error) {
       console.error("Failed to delete item:", error);
     }
   };
 
+  // Utility helpers
   const formatFileSize = (bytes) => {
     if (!bytes) return "0 B";
     const units = ["B", "KB", "MB", "GB"];
     let size = bytes;
     let unitIndex = 0;
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024;
-      unitIndex++;
-    }
+    while (size >= 1024 && unitIndex < units.length - 1) { size /= 1024; unitIndex++; }
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
 
-  // Helper to strip vault prefixes like "1770806...-" from filenames for display
   const getDisplayFileName = (raw) => {
     if (!raw) return "";
     const m = raw.match(/^(\d{5,})-(.+)$/);
-    if (m) return m[2];
-    return raw;
+    return m ? m[2] : raw;
   };
 
-  // Helper function to get item preview for display
   const getItemPreview = (item) => {
-    if (item.type === "text") {
-      return item.content || "";
-    } else if (item.type === "link") {
-      return item.title || item.metadata?.url || "";
-    } else {
-      const base = item.title || item.metadata?.filename || "";
-      return getDisplayFileName(base);
-    }
+    if (item.type === "text") return item.content || "";
+    if (item.type === "link") return item.title || item.metadata?.url || "";
+    const base = item.title || item.metadata?.filename || "";
+    return getDisplayFileName(base);
   };
 
-  // Text snippet preview (second line in cards)
   const getItemPreviewSnippet = (item) => {
     if (item.type === "text") {
       const raw = item.content || "";
       if (!raw) return "";
-      return raw.length > 140 ? raw.slice(0, 137) + "…" : raw;
+      return raw.length > 140 ? raw.slice(0, 137) + "..." : raw;
     }
-    if (item.type === "link") {
-      return item.metadata?.url || "";
-    }
-    // Files/images: keep quiet, title + meta only
+    if (item.type === "link") return item.metadata?.url || "";
     return "";
   };
 
@@ -523,30 +463,79 @@ function App() {
     return `file:///${encodeURI(normalized)}`;
   };
 
-  // Build thumbnail URL for items using vault dir + relative thumbnail path; fall back to file URL
   const getThumbnailUrl = (item) => {
     const rel = item.metadata?.thumbnail;
     if (vaultDir && rel) {
       const normalizedVault = vaultDir.replace(/\\/g, "/");
       const normalizedRel = rel.replace(/\\/g, "/");
-      const full = `${normalizedVault}/${normalizedRel}`;
-      return `file:///${encodeURI(full)}`;
+      return `file:///${encodeURI(`${normalizedVault}/${normalizedRel}`)}`;
     }
     return getFileUrl(item);
   };
 
-  // Render top-of-card preview based on item type
+  const getCategoryLabel = (category) => {
+    const labels = {
+      ideas: "Ideas", links: "Links", code: "Code", notes: "Notes",
+      images: "Images", documents: "Documents", videos: "Videos", csv: "Data",
+    };
+    return labels[category] || category;
+  };
+
+  const getFilteredItems = () => {
+    if (activeCategory === "all") return items;
+    return items.filter((item) => {
+      switch (activeCategory) {
+        case "images": return item.type === "image" || item.category === "images";
+        case "documents": return item.category === "documents";
+        case "videos": return item.category === "videos";
+        case "links": return item.type === "link" || item.category === "links";
+        case "notes": return item.category === "notes";
+        case "ideas": return item.category === "ideas";
+        case "code": return item.category === "code";
+        case "csv": return item.category === "csv";
+        case "text": return item.type === "text";
+        default: return item.category === activeCategory;
+      }
+    });
+  };
+
+  const getCategoryList = () => [
+    "all", "images", "documents", "videos", "links", "notes", "ideas", "code", "csv", "text",
+  ];
+
+  const getCategoryCount = (cat) => {
+    if (cat === "all") return items.length;
+    return items.filter((item) => {
+      switch (cat) {
+        case "images": return item.type === "image" || item.category === "images";
+        case "documents": return item.category === "documents";
+        case "videos": return item.category === "videos";
+        case "links": return item.type === "link" || item.category === "links";
+        case "notes": return item.category === "notes";
+        case "ideas": return item.category === "ideas";
+        case "code": return item.category === "code";
+        case "csv": return item.category === "csv";
+        case "text": return item.type === "text";
+        default: return item.category === cat;
+      }
+    }).length;
+  };
+
+  const handleOverlayKeyDown = (e) => {
+    if (e.key === "Enter" && e.ctrlKey) { e.preventDefault(); handleSaveText(); }
+  };
+
+  const handleCancel = () => {
+    resetToNeutral();
+    if (window.electronAPI && window.electronAPI.hideOverlay) window.electronAPI.hideOverlay();
+  };
+
+  // Render preview block for cards
   const renderItemPreview = (item) => {
     const baseClass = "item-card-preview";
 
-    // Pure text / notes / ideas / code: no separate top preview block,
-    // let the card body show the snippet once.
-    if (
-      item.type === "text" ||
-      item.category === "ideas" ||
-      item.category === "notes" ||
-      item.category === "code"
-    ) {
+    // Pure text / notes / ideas / code: no preview block
+    if (item.type === "text" || item.category === "ideas" || item.category === "notes" || item.category === "code") {
       return null;
     }
 
@@ -555,11 +544,7 @@ function App() {
       const src = getThumbnailUrl(item);
       return (
         <div className={`${baseClass} image`}>
-          {src ? (
-            <img src={src} alt={item.title || item.metadata?.filename || "Image"} />
-          ) : (
-            <div>🖼️</div>
-          )}
+          {src ? <img src={src} alt={item.title || item.metadata?.filename || "Image"} /> : <span style={{ color: "var(--text-tertiary)" }}>Image</span>}
         </div>
       );
     }
@@ -569,143 +554,88 @@ function App() {
       let src = null;
       const rel = item.metadata?.thumbnail;
       if (vaultDir && rel) {
-        const normalizedVault = vaultDir.replace(/\\/g, "/");
-        const normalizedRel = rel.replace(/\\/g, "/");
-        const full = `${normalizedVault}/${normalizedRel}`;
-        src = `file:///${encodeURI(full)}`;
+        const nv = vaultDir.replace(/\\/g, "/");
+        const nr = rel.replace(/\\/g, "/");
+        src = `file:///${encodeURI(`${nv}/${nr}`)}`;
       }
       return (
-        <div className={`${baseClass} image`}>
-          {src ? (
-            <img src={src} alt={item.title || item.metadata?.filename || "Video"} />
-          ) : (
-            <div>▶</div>
-          )}
+        <div className={`${baseClass} image`} style={{ position: "relative" }}>
+          {src ? <img src={src} alt={item.title || "Video"} /> : <span style={{ color: "var(--text-tertiary)", fontSize: 32 }}>{'>'}</span>}
+          <div className="video-play-overlay">
+            <div className="play-button"><PlayIcon /></div>
+          </div>
         </div>
       );
     }
 
-    // Documents / data files
+    // Documents & data files
     const filename = (item.metadata?.filename || "").toLowerCase();
-    const isPdf =
-      (item.metadata?.mimeType || "").includes("pdf") ||
-      filename.endsWith(".pdf");
-    const isCsv =
-      item.category === "csv" ||
-      filename.endsWith(".csv") ||
-      filename.endsWith(".tsv");
-    const isDoc =
-      filename.endsWith(".doc") ||
-      filename.endsWith(".docx");
+    const isPdf = (item.metadata?.mimeType || "").includes("pdf") || filename.endsWith(".pdf");
+    const isCsv = item.category === "csv" || filename.endsWith(".csv") || filename.endsWith(".tsv");
+    const isDoc = filename.endsWith(".doc") || filename.endsWith(".docx");
 
-    // For PDFs, try to show first-page thumbnail when available
     if (isPdf && item.metadata?.thumbnail && vaultDir) {
-      const normalizedVault = vaultDir.replace(/\\/g, "/");
-      const normalizedRel = item.metadata.thumbnail.replace(/\\/g, "/");
-      const full = `${normalizedVault}/${normalizedRel}`;
-      const src = `file:///${encodeURI(full)}`;
+      const nv = vaultDir.replace(/\\/g, "/");
+      const nr = item.metadata.thumbnail.replace(/\\/g, "/");
+      const src = `file:///${encodeURI(`${nv}/${nr}`)}`;
       return (
         <div className={`${baseClass} image`}>
-          <img
-            src={src}
-            alt={item.title || item.metadata?.filename || "PDF"}
-          />
+          <img src={src} alt={item.title || "PDF"} />
         </div>
       );
     }
 
-    // PDFs without thumbnail: generic PDF visual block (no filename inside)
-    if (isPdf) {
-      return <div className={`${baseClass} pdf`} />;
-    }
+    if (isPdf) return <div className={`${baseClass} pdf`} />;
+    if (isCsv) return <div className={`${baseClass} csv`}><span className="csv-label">CSV</span></div>;
+    if (isDoc) return <div className={`${baseClass} doc`} />;
 
-    // CSV / data files: show data-style visual block (no filename inside)
-    if (isCsv) {
-      return <div className={`${baseClass} csv`} />;
-    }
-
-    // DOC / DOCX: show document-style visual block (no filename inside)
-    if (isDoc) {
-      return <div className={`${baseClass} doc`} />;
-    }
-
-    // Fallback for other documents/data: simple colored block with filename
-    const kindClass = isPdf ? "pdf" : "file";
     return (
-      <div className={`${baseClass} ${kindClass}`}>
+      <div className={`${baseClass} file`}>
         <div>{getDisplayFileName(item.title)}</div>
-        <div className="item-card-filename">
-          {getDisplayFileName(item.metadata?.filename)}
-        </div>
+        <div className="item-card-filename">{getDisplayFileName(item.metadata?.filename)}</div>
       </div>
     );
   };
 
-  // Helper function to get category display name
-  const getCategoryLabel = (category) => {
-    const categoryLabels = {
-      ideas: "Ideas",
-      links: "Links", 
-      code: "Code",
-      notes: "Notes",
-      images: "Images",
-      documents: "Documents",
-      videos: "Videos",
-      csv: "Data"
+  // Group items by date
+  const groupItemsByDate = (itemsToGroup) => {
+    const groupsMap = new Map();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const getDayName = (date) => {
+      return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][date.getDay()];
     };
-    return categoryLabels[category] || category;
-  };
 
-  const getFilteredItems = () => {
-    if (activeCategory === "all") return items;
-    return items.filter((item) => {
-      switch (activeCategory) {
-        case "images":
-          return item.type === "image" || item.category === "images";
-        case "documents":
-          return item.category === "documents";
-        case "videos":
-          return item.category === "videos";
-        case "links":
-          return item.type === "link" || item.category === "links";
-        case "notes":
-          return item.category === "notes";
-        case "ideas":
-          return item.category === "ideas";
-        case "code":
-          return item.category === "code";
-        case "csv":
-          return item.category === "csv";
-        case "text":
-          return item.type === "text";
-        default:
-          return item.category === activeCategory;
-      }
+    itemsToGroup.forEach((item) => {
+      const created = new Date(item.metadata?.createdAt || item.timestamp);
+      const dayStart = new Date(created.getFullYear(), created.getMonth(), created.getDate());
+      let label;
+      if (dayStart >= today) label = "Today";
+      else if (dayStart >= yesterday) label = "Yesterday";
+      else if (dayStart >= weekAgo) label = getDayName(dayStart);
+      else label = dayStart.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+      if (!groupsMap.has(label)) groupsMap.set(label, { label, items: [], sortKey: dayStart.getTime() });
+      groupsMap.get(label).items.push(item);
     });
+
+    const groups = Array.from(groupsMap.values());
+    groups.sort((a, b) => b.sortKey - a.sortKey);
+    groups.forEach((group) => {
+      group.items.sort((a, b) => {
+        const da = new Date(a.metadata?.createdAt || a.timestamp).getTime();
+        const db = new Date(b.metadata?.createdAt || b.timestamp).getTime();
+        return db - da;
+      });
+    });
+    return groups;
   };
 
-  const getCategoryList = () => {
-    // Always show a fixed set of categories, even when empty
-    return ["all", "images", "documents", "videos", "links", "notes", "ideas", "code", "csv", "text"];
-  };
-
-  // Overlay-only keyboard handler for textarea (Ctrl+Enter)
-  const handleOverlayKeyDown = (e) => {
-    if (e.key === "Enter" && e.ctrlKey) {
-      e.preventDefault();
-      handleSaveText();
-    }
-  };
-
-  const handleCancel = () => {
-    // Cancel just resets the overlay to neutral, main process handles hiding
-    resetToNeutral();
-    if (window.electronAPI && window.electronAPI.hideOverlay) {
-      window.electronAPI.hideOverlay();
-    }
-  };
-
-  // OVERLAY VIEW
+  // ========== OVERLAY VIEW ==========
   if (isOverlay) {
     return (
       <div
@@ -716,22 +646,21 @@ function App() {
         onDrop={handleDrop}
       >
         <div className="overlay-surface">
-          {/* Text Mode - Default clean text input */}
-          <div className={`overlay-text-mode ${overlayPhase === 'drop' ? 'mode-transitioning-out' : ''}`}>
+          {/* Text Mode */}
+          <div className={`overlay-text-mode ${overlayPhase === "drop" ? "mode-transitioning-out" : ""}`}>
             <div className="overlay-header">
               <div className="overlay-title">Dump anything</div>
               <div className="overlay-hint">Alt + D to dump anything</div>
             </div>
-            
             <div className="text-input-container">
               <textarea
                 ref={textareaRef}
                 className="overlay-textarea"
-                placeholder="Type or paste anything to dump."
+                placeholder="Type or paste anything to dump..."
                 value={text}
                 onChange={handleTextChange}
                 onKeyDown={handleOverlayKeyDown}
-                disabled={overlayPhase === 'saving' || overlayPhase === 'confirmation'}
+                disabled={overlayPhase === "saving" || overlayPhase === "confirmation"}
               />
               {detectedCategory && (
                 <div className="detected-category">
@@ -739,369 +668,234 @@ function App() {
                 </div>
               )}
             </div>
-            
             <div className="overlay-actions">
               <button
                 className="overlay-btn save-btn"
                 onClick={handleSaveText}
-                disabled={overlayPhase === 'saving' || !text.trim()}
+                disabled={overlayPhase === "saving" || !text.trim()}
               >
-                {overlayPhase === 'saving' ? 'Saving...' : 'Save'}
+                {overlayPhase === "saving" ? "Saving..." : "Save"}
               </button>
               <button
                 className="overlay-btn cancel-btn"
                 onClick={handleCancel}
-                disabled={overlayPhase === 'saving'}
+                disabled={overlayPhase === "saving"}
               >
                 Cancel
               </button>
             </div>
           </div>
 
-          {/* Drop Mode - Activates on file drag */}
-          <div className={`overlay-drop-mode ${overlayPhase === 'drop' ? 'mode-active' : ''}`}>
+          {/* Drop Mode */}
+          <div className={`overlay-drop-mode ${overlayPhase === "drop" ? "mode-active" : ""}`}>
             <div className="drop-zone-content">
-              <div className="drop-icon">📁</div>
-              <div className="drop-title">Drop to save</div>
-              <div className="drop-hint">Drag a file over this window and release to store it.</div>
+              <div className="drop-icon-wrapper">
+                <DownloadIcon />
+              </div>
+              <div className="drop-title">Drop items here</div>
+              <div className="drop-hint">Release to save to your vault</div>
             </div>
           </div>
 
-          {/* Success Feedback */}
-          {overlayPhase === 'confirmation' && (
+          {/* Success */}
+          {overlayPhase === "confirmation" && (
             <div className="overlay-feedback">
-              <div className="feedback-icon">✓</div>
+              <div className="feedback-icon"><CheckIcon /></div>
               <div className="feedback-message">{successMessage}</div>
             </div>
           )}
 
-          {/* Error State */}
-          {overlayPhase === 'error' && (
+          {/* Error */}
+          {overlayPhase === "error" && (
             <div className="overlay-error">
-              <div className="error-icon">⚠</div>
+              <div className="error-icon">!</div>
               <div className="error-message">{validationMessage}</div>
-              <button
-                className="overlay-btn retry-btn"
-                onClick={resetToNeutral}
-              >
-                Try Again
-              </button>
+              <button className="retry-btn" onClick={resetToNeutral}>Try Again</button>
             </div>
           )}
 
-          {/* Drag Overlay Visual Feedback */}
-          {isDragging && (
-            <div className="drag-overlay">
-              <div className="drag-indicator">
-                <div className="drag-pulse"></div>
-              </div>
-            </div>
-          )}
+          {/* Drag Visual */}
+          {isDragging && <div className="drag-overlay" />}
         </div>
       </div>
     );
   }
 
-  // Helper function to group items by human-friendly dates and sort newest-first
-  const groupItemsByDate = (itemsToGroup) => {
-    const groupsMap = new Map();
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const getDayName = (date) => {
-      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      return days[date.getDay()];
-    };
-
-    itemsToGroup.forEach((item) => {
-      const created = new Date(item.metadata?.createdAt || item.timestamp);
-      const dayStart = new Date(created.getFullYear(), created.getMonth(), created.getDate());
-      let label;
-
-      if (dayStart >= today) {
-        label = "Today";
-      } else if (dayStart >= yesterday) {
-        label = "Yesterday";
-      } else if (dayStart >= weekAgo) {
-        label = getDayName(dayStart);
-      } else {
-        label = dayStart.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-      }
-
-      if (!groupsMap.has(label)) {
-        groupsMap.set(label, {
-          label,
-          items: [],
-          sortKey: dayStart.getTime(),
-        });
-      }
-      groupsMap.get(label).items.push(item);
-    });
-
-    const groups = Array.from(groupsMap.values());
-
-    // Sort groups by day (newest first)
-    groups.sort((a, b) => b.sortKey - a.sortKey);
-
-    // Within each group, sort items by createdAt descending
-    groups.forEach((group) => {
-      group.items.sort((a, b) => {
-        const da = new Date(a.metadata?.createdAt || a.timestamp).getTime();
-        const db = new Date(b.metadata?.createdAt || b.timestamp).getTime();
-        return db - da;
-      });
-    });
-
-    return groups;
-  };
-
-  // LIBRARY VIEW
+  // ========== LIBRARY VIEW ==========
   const filteredItems = searchQuery.trim() ? searchResults : getFilteredItems();
   const categories = getCategoryList();
-  const dateGroups =
-    activeCategory === "all" && !searchQuery.trim()
-      ? groupItemsByDate(filteredItems)
-      : null;
+  const dateGroups = activeCategory === "all" && !searchQuery.trim() ? groupItemsByDate(filteredItems) : null;
+
+  const renderCard = (item) => (
+    <div key={item.id} className="library-item-card">
+      <div className="item-card-content" onClick={() => setSelectedItem(item)}>
+        {renderItemPreview(item)}
+
+        {/* Card body */}
+        {item.type === "text" || item.category === "notes" || item.category === "ideas" ? (
+          <div className={`item-card-text-only ${item.category === "code" ? "code-text" : ""}`}>
+            {item.content || ""}
+          </div>
+        ) : item.category === "code" ? (
+          <div className="item-card-text-only code-text">
+            {item.content || ""}
+          </div>
+        ) : (
+          <div className="item-card-body">
+            <div className="item-card-title">{getItemPreview(item).split("\n")[0]}</div>
+            {item.type === "link" && item.metadata?.url && (
+              <div className="item-link-url">{item.metadata.url}</div>
+            )}
+            {getItemPreviewSnippet(item) && item.type !== "link" && (
+              <div className="item-card-snippet">{getItemPreviewSnippet(item)}</div>
+            )}
+          </div>
+        )}
+
+        <div className="item-card-meta">
+          <span className="meta-badge">
+            {item.type === "image" ? "Image" : item.type === "link" ? "Link" : item.type === "file" ? "File" : "Text"}
+          </span>
+          <span className="meta-time">
+            {new Date(item.metadata?.createdAt || item.timestamp).toLocaleDateString("en-US", {
+              month: "short", day: "numeric",
+            })}
+          </span>
+        </div>
+
+        <button
+          className="item-card-delete-btn"
+          onClick={(e) => { e.stopPropagation(); handleDeleteItem(item.id); }}
+          title="Delete"
+          aria-label="Delete item"
+        >
+          {'x'}
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="app-container library-view">
-      {/* Search Bar - Full Width */}
-      <div className="library-search-bar">
-        <input
-          type="text"
-          className="library-search-input"
-          placeholder="Search your vault... (try 'screenshot from yesterday' or 'notes about shortcuts')"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {isSearching && <div className="search-loading">Searching...</div>}
-        {searchExplanation && !isSearching && (
-          <div className="search-explanation">{searchExplanation}</div>
-        )}
-      </div>
-
-      {/* Category Tabs - Always Show All Categories */}
-      <div className="category-tabs">
+      {/* Sidebar */}
+      <nav className="sidebar" aria-label="Category navigation">
+        <div className="sidebar-header">
+          <div className="sidebar-brand">AltDump</div>
+          <div className="sidebar-subtitle">Your vault</div>
+        </div>
+        <div className="sidebar-section-label">Categories</div>
         {categories.map((cat) => (
           <button
             key={cat}
-            className={`category-pill ${activeCategory === cat ? "active" : ""}`}
+            className={`sidebar-item ${activeCategory === cat ? "active" : ""}`}
             onClick={() => setActiveCategory(cat)}
           >
-            {cat === "all" ? "All" : getCategoryLabel(cat)}
+            <span className="sidebar-icon">{CATEGORY_ICONS[cat] || null}</span>
+            <span>{cat === "all" ? "All Items" : getCategoryLabel(cat)}</span>
+            <span className="sidebar-count">{getCategoryCount(cat) || ""}</span>
           </button>
         ))}
-      </div>
+      </nav>
 
-      {/* Content Area */}
-      <div className="library-content">
-        {items.length === 0 ? (
-          <div className="empty-vault">
-            <div className="empty-vault-title">Your vault is empty</div>
-            <div className="empty-vault-hint">
-              Press <kbd>Alt</kbd> + <kbd>D</kbd> to start capturing content
-            </div>
+      {/* Main Content */}
+      <div className="main-content">
+        {/* Search Bar */}
+        <div className="search-bar-wrapper">
+          <div className="search-bar">
+            <span className="search-bar-icon"><SearchIcon /></span>
+            <input
+              type="text"
+              placeholder="Search your vault..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search vault"
+            />
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="empty-vault">
-            <div className="empty-vault-title">
-              {searchQuery.trim()
-                ? "No results found"
-                : "No items in this category yet"}
-            </div>
-            <div className="empty-vault-hint">
-              {searchQuery.trim()
-                ? "Try different keywords or check spelling"
-                : "Items will appear here when you add them"}
-            </div>
+          <div className="search-status">
+            {isSearching && <span className="search-loading">Searching...</span>}
+            {searchExplanation && !isSearching && (
+              <span className="search-explanation">{searchExplanation}</span>
+            )}
           </div>
-        ) : dateGroups ? (
-          // Show grouped by date for "All" category (newest sections first)
-          <div className="date-grouped-items">
-            {dateGroups.map((group) => (
-              <div key={group.label} className="date-group">
-                <div className="date-group-header">{group.label}</div>
-                <div className="date-group-items">
-                  {group.items.map((item) => {
-                    return (
-                      <div key={item.id} className="library-item-card">
-                        <div
-                          className="item-card-content"
-                          onClick={() => setSelectedItem(item)}
-                        >
-                          {renderItemPreview(item)}
-                          <div className="item-card-details">
-                            {item.type === "text" ? (
-                              <div className="item-card-text-only">
-                                {item.content || ""}
-                              </div>
-                            ) : (
-                              <>
-                                <div className="item-card-title">
-                                  {getItemPreview(item).split("\n")[0]}
-                                </div>
-                                {getItemPreviewSnippet(item) && (
-                                  <div className="item-card-snippet">
-                                    {getItemPreviewSnippet(item)}
-                                  </div>
-                                )}
-                              </>
-                            )}
-                            <div className="item-card-meta">
-                              <span className="meta-badge">
-                                {item.type === "image"
-                                  ? "Image"
-                                  : item.type === "link"
-                                  ? "Link"
-                                  : item.type === "file"
-                                  ? "File"
-                                  : "Text"}
-                              </span>
-                              <span className="meta-time">
-                                {new Date(
-                                  item.metadata?.createdAt || item.timestamp
-                                ).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            </div>
-                          </div>
-                          <button
-                            className="item-card-delete-btn"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteItem(item.id);
-                            }}
-                            title="Delete"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="content-area">
+          {items.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
               </div>
-            ))}
-          </div>
-        ) : (
-          // Show regular items for filtered categories or search
-          <div className="regular-items">
-            {filteredItems.map((item) => (
-              <div key={item.id} className="library-item-card">
-                <div
-                  className="item-card-content"
-                  onClick={() => setSelectedItem(item)}
-                >
-                  {renderItemPreview(item)}
-                  <div className="item-card-details">
-                    {item.type === "text" ? (
-                      <div className="item-card-text-only">
-                        {item.content || ""}
-                      </div>
-                    ) : (
-                      <>
-                        <div className="item-card-title">
-                          {getItemPreview(item).split("\n")[0]}
-                        </div>
-                        {getItemPreviewSnippet(item) && (
-                          <div className="item-card-snippet">
-                            {getItemPreviewSnippet(item)}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    <div className="item-card-meta">
-                      <span className="meta-badge">
-                        {item.type === "image"
-                          ? "Image"
-                          : item.type === "link"
-                          ? "Link"
-                          : item.type === "file"
-                          ? "File"
-                          : "Text"}
-                      </span>
-                      <span className="meta-time">
-                        {new Date(
-                          item.metadata?.createdAt || item.timestamp
-                        ).toLocaleDateString()}
-                      </span>
-                    </div>
+              <div className="empty-state-title">Your vault is empty</div>
+              <div className="empty-state-hint">
+                Press <kbd>Alt</kbd> + <kbd>D</kbd> to start capturing content
+              </div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">
+                <SearchIcon />
+              </div>
+              <div className="empty-state-title">
+                {searchQuery.trim() ? "No results found" : "No items in this category"}
+              </div>
+              <div className="empty-state-hint">
+                {searchQuery.trim() ? "Try different keywords or check spelling" : "Items will appear here when you add them"}
+              </div>
+            </div>
+          ) : dateGroups ? (
+            <div className="date-grouped-items">
+              {dateGroups.map((group) => (
+                <div key={group.label} className="date-group">
+                  <div className="date-group-header">{group.label}</div>
+                  <div className="date-group-items">
+                    {group.items.map(renderCard)}
                   </div>
-                  <button
-                    className="item-card-delete-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteItem(item.id);
-                    }}
-                    title="Delete"
-                  >
-                    ×
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="regular-items">
+              {filteredItems.map(renderCard)}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Detail overlay for full item view */}
+      {/* Detail Overlay */}
       {selectedItem && (
-        <div className="detail-overlay" onClick={() => setSelectedItem(null)}>
-          <div
-            className="detail-panel"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="detail-overlay" onClick={() => setSelectedItem(null)} role="dialog" aria-modal="true">
+          <div className="detail-panel" onClick={(e) => e.stopPropagation()}>
             <div className="detail-header">
-              <div className="detail-title">
-                {getItemPreview(selectedItem).split("\n")[0]}
-              </div>
-              <button
-                className="detail-close-btn"
-                onClick={() => setSelectedItem(null)}
-              >
-                ×
+              <div className="detail-title">{getItemPreview(selectedItem).split("\n")[0]}</div>
+              <button className="detail-close-btn" onClick={() => setSelectedItem(null)} aria-label="Close detail view">
+                {'x'}
               </button>
             </div>
             <div className="detail-body">
               {selectedItem.type === "image" && getFileUrl(selectedItem) && (
                 <div className="detail-image-wrapper">
-                  <img
-                    src={getFileUrl(selectedItem)}
-                    alt={
-                      selectedItem.metadata?.filename || selectedItem.title || ""
-                    }
-                  />
+                  <img src={getFileUrl(selectedItem)} alt={selectedItem.metadata?.filename || selectedItem.title || ""} />
                 </div>
               )}
               {selectedItem.type === "text" && (
-                <pre className="detail-text">
-                  {selectedItem.content || ""}
-                </pre>
+                <pre className="detail-text">{selectedItem.content || ""}</pre>
               )}
               {selectedItem.type === "file" && (
                 <div className="detail-file">
                   <div className="detail-file-name">
-                    {getDisplayFileName(
-                      selectedItem.metadata?.filename || selectedItem.title
-                    )}
+                    {getDisplayFileName(selectedItem.metadata?.filename || selectedItem.title)}
                   </div>
                   <div className="detail-file-meta">
-                    {new Date(
-                      selectedItem.metadata?.createdAt || selectedItem.timestamp
-                    ).toLocaleString()}
+                    {new Date(selectedItem.metadata?.createdAt || selectedItem.timestamp).toLocaleString()}
                   </div>
                   <button
                     className="detail-open-btn"
                     onClick={() => {
-                      const path = selectedItem.storagePath || selectedItem.path;
-                      if (path && window.electronAPI.openItemPath) {
-                        window.electronAPI.openItemPath(path);
-                      }
+                      const p = selectedItem.storagePath || selectedItem.path;
+                      if (p && window.electronAPI.openItemPath) window.electronAPI.openItemPath(p);
                     }}
                   >
                     Open in default app
