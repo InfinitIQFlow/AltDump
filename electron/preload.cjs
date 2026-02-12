@@ -14,8 +14,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // New overlay state management
   getOverlayState: () => ipcRenderer.invoke("get-overlay-state"),
   setOverlayMode: (mode) => ipcRenderer.invoke("set-overlay-mode", mode),
-  // Smart search
+  // Smart search (legacy compatibility)
   smartSearch: (query) => ipcRenderer.invoke("smart-search", query),
+  // Semantic search (new SQLite + Ollama embeddings)
+  semanticSearch: (query) => ipcRenderer.invoke("semantic-search", query),
+  // Save item (unified save with embedding generation)
+  saveItem: (itemData) => ipcRenderer.invoke("save-item", itemData),
   // Vault directory (for local file URLs like thumbnails)
   getVaultDir: () => ipcRenderer.invoke("get-vault-dir"),
   // Open an item path in the OS default app

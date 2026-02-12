@@ -526,7 +526,7 @@ ipcMain.handle("get-overlay-state", async () => {
   };
 });
 
-// Smart search handler
+// Smart search handler (legacy compatibility)
 ipcMain.handle("smart-search", async (event, query) => {
   try {
     console.log("[MAIN] Smart search query:", query);
@@ -536,6 +536,38 @@ ipcMain.handle("smart-search", async (event, query) => {
   } catch (error) {
     console.error("[MAIN] Smart search error:", error);
     return { results: [], explanation: "Search failed", error: error.message };
+  }
+});
+
+// Semantic search handler (new SQLite + Ollama embeddings)
+ipcMain.handle("semantic-search", async (event, query) => {
+  try {
+    console.log("[MAIN] Semantic search query:", query);
+    const results = await storage.semanticSearch(query);
+    console.log("[MAIN] Semantic search results:", results.length, "items");
+    return results;
+  } catch (error) {
+    console.error("[MAIN] Semantic search error:", error);
+    return [];
+  }
+});
+
+// Save item handler (unified save with embedding generation)
+ipcMain.handle("save-item", async (event, itemData) => {
+  try {
+    console.log("[MAIN] Save item:", itemData.type, itemData.title);
+    setOverlayState('saving');
+    const saved = await storage.saveItem(itemData);
+    if (mainWindow) {
+      mainWindow.webContents.send("items-updated");
+    }
+    if (overlayWindow && overlayVisible) {
+      overlayWindow.webContents.send('overlay-save-success');
+    }
+    return saved;
+  } catch (error) {
+    console.error("[MAIN] Save item error:", error);
+    throw error;
   }
 });
 
